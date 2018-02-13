@@ -1,6 +1,27 @@
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 //import edu.princeton.cs.algs4.StdOut;
-
+/**
+ * design 
+ *      	[0]
+ *		 1col	2col	3col
+ *  1row [1:11] [2:12] [3:13]
+ *	2row [4:14] [5:15] [6:16]
+ *  3row [7:17] [8:18] [9:19]
+ *
+ *   		[10]
+ *
+ *  the number [7,8,9]  union [10]
+ *  the number [17,18,19] not union [10] 
+ *  the number [1,2,3,11,12,13] union [0]
+ *
+ *  percolation [0] union [10] ?
+ *  a full node example [18] union [0] ?
+ *
+ *  int p = (row-1)*n + col
+ *  int o = p + n*n + 1
+ *
+ *
+ * */
 public  class Percolation {
 
 	
