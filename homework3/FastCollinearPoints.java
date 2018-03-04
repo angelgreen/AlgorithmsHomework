@@ -7,22 +7,12 @@ import edu.princeton.cs.algs4.StdOut;
 
 public class FastCollinearPoints {
 
-
-	private class LineSegmentInfo {
-		public Point origin; 
-		public Point dest;
-
-		public LineSegmentInfo(Point origin, Point dest) {
-			this.origin = origin;
-			this.dest = dest;
-		}
-	}	
-
-	private LineSegmentInfo[] lineSegmentInfoList;
 	private LineSegment[] lineSegmentList;
 	private int numberOfSegments;	
 
 	private final Point[] dupPoints;
+
+	private Point[] originPoints; //the line origin point
 
 	public FastCollinearPoints(Point[] points) {
 
@@ -32,28 +22,32 @@ public class FastCollinearPoints {
 
 	  validate(dupPoints);
 
-	  this.lineSegmentInfoList = new LineSegmentInfo[2];
+	  this.lineSegmentList = new LineSegment[2];
+	  this.originPoints = new Point[2];
+
 	  find();
 	}	
 
 
 	private void find() {
 
-
 		for(int i = 0; i < dupPoints.length; i++) {
 
 			Point origin = dupPoints[i];
 
+			//copy dupPoints
+			Point[] sortPoints = Arrays.copyOfRange(dupPoints, i, dupPoints.length);
+
 			Comparator<Point> slopeOrder = origin.slopeOrder();
 
-			Arrays.sort(dupPoints, i, dupPoints.length, slopeOrder);
+			Arrays.sort(sortPoints, slopeOrder);
 
 			int n = 1;
 
-			double slope1 = origin.slopeTo(dupPoints[i]);
+			double slope1 = origin.slopeTo(sortPoints[0]);
 
-			for(int j = i+1; j < dupPoints.length; j++) {
-				double slope2 = origin.slopeTo(dupPoints[j]);
+			for(int j = 1; j < sortPoints.length; j++) {
+				double slope2 = origin.slopeTo(sortPoints[j]);
 				//equals
 				if(slope2 == slope1) {
 					n++;
@@ -62,7 +56,7 @@ public class FastCollinearPoints {
 					//slope not equals 
 					  //find more than 4 point 
 					if(n >= 3) {
-						Point dest = dupPoints[j - 1];
+						Point dest = sortPoints[j - 1];
 						findAndPut(origin, dest);
 					}	
 					//find not equals
@@ -72,13 +66,11 @@ public class FastCollinearPoints {
 			}
 			//the end one
 			if(n >= 3) {
-				Point dest = dupPoints[dupPoints.length - 1];
+				Point dest = sortPoints[sortPoints.length - 1];
 				findAndPut(origin, dest);
 			}	
-
-			Arrays.sort(dupPoints);
 		}	
-	  this.lineSegmentInfoList = Arrays.copyOf(this.lineSegmentInfoList, numberOfSegments);
+	  this.lineSegmentList = Arrays.copyOf(this.lineSegmentList, numberOfSegments);
 	}
 
 	//find and put lineSegment 
@@ -87,25 +79,30 @@ public class FastCollinearPoints {
 		//find duplicate line
 		for(int i = 0; i < numberOfSegments; i++) {
 
-			LineSegmentInfo lineSegmentInfo = this.lineSegmentInfoList[i];
+			Point s1 = originPoints[i]; //the line origin point 
 
-			Point s1 = lineSegmentInfo.origin;
-			Point s2 = lineSegmentInfo.dest;
-
-			double slope = s1.slopeTo(s2);
-			double slope1 = origin.slopeTo(dest);
-			double slope2 = s1.slopeTo(origin);
+			double slope1 = s1.slopeTo(origin);
+			double slope2 = s1.slopeTo(dest);
 			//the same line ?
-			if(slope == slope1 && slope == slope2) {
+			if(slope1 == slope2) {
 				return; //find the same line
 			}
 		}
 
-		if(numberOfSegments == lineSegmentInfoList.length) {
-			lineSegmentInfoList = Arrays.copyOf(lineSegmentInfoList, 2 * lineSegmentInfoList.length);
+		if(numberOfSegments == lineSegmentList.length) {
+			lineSegmentList = Arrays.copyOf(lineSegmentList, 2 * lineSegmentList.length);
 		}
 
-		lineSegmentInfoList[numberOfSegments++] = new LineSegmentInfo(origin, dest);
+		if(numberOfSegments == originPoints.length) {
+			originPoints = Arrays.copyOf(originPoints, 2 * originPoints.length);
+		}
+
+		int index = numberOfSegments;
+
+		lineSegmentList[index] = new LineSegment(origin, dest);
+		originPoints[index] = origin; //the origin point 
+
+		numberOfSegments++;
 	}
 
 
@@ -114,14 +111,6 @@ public class FastCollinearPoints {
 	}
 
 	public LineSegment[] segments() {
-
-		if(null == lineSegmentList) {
-			this.lineSegmentList = new LineSegment[lineSegmentInfoList.length];
-			for(int i = 0; i < numberOfSegments; i++) {
-				LineSegmentInfo lineSegmentInfo = lineSegmentInfoList[i];	
-				lineSegmentList[i] = new LineSegment(lineSegmentInfo.origin, lineSegmentInfo.dest);
-			}
-		}	
 		return Arrays.copyOf(this.lineSegmentList, this.lineSegmentList.length);
 	}
 
