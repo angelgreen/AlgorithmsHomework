@@ -12,8 +12,6 @@ public class FastCollinearPoints {
 
 	private final Point[] dupPoints;
 
-	private Point[] originPoints; //the line origin point
-
 	public FastCollinearPoints(Point[] points) {
 
 	  if(null == points) throw new IllegalArgumentException("");	
@@ -23,7 +21,6 @@ public class FastCollinearPoints {
 	  validate(dupPoints);
 
 	  this.lineSegmentList = new LineSegment[2];
-	  this.originPoints = new Point[2];
 
 	  find();
 	}	
@@ -36,20 +33,24 @@ public class FastCollinearPoints {
 			Point origin = dupPoints[i];
 
 			//copy dupPoints
-			Point[] sortPoints = Arrays.copyOfRange(dupPoints, i, dupPoints.length);
+			Point[] sortPoints = Arrays.copyOf(dupPoints,dupPoints.length);
 
-			Comparator<Point> slopeOrder = origin.slopeOrder();
-
-			Arrays.sort(sortPoints, slopeOrder);
+			Arrays.sort(sortPoints, origin.slopeOrder());
 
 			int n = 1;
 
 			double slope1 = origin.slopeTo(sortPoints[0]);
+			Point min = sortPoints[0];
 
 			for(int j = 1; j < sortPoints.length; j++) {
 				double slope2 = origin.slopeTo(sortPoints[j]);
 				//equals
 				if(slope2 == slope1) {
+					Point s = sortPoints[j];
+					//find the min point
+					if(s.compareTo(min) < 0) {
+						min = s;
+					}	
 					n++;
 				}
 				else {
@@ -57,54 +58,45 @@ public class FastCollinearPoints {
 					  //find more than 4 point 
 					if(n >= 3) {
 						Point dest = sortPoints[j - 1];
-						findAndPut(origin, dest);
+						//if the min is less than origin the line not bigger
+						// a -> b -> c -> d //the biggest line segment
+						//  b -> a -> c -> d //the smaller line segment 
+						if(min.compareTo(origin) < 0) {
+							//find the largest line segment
+						//	findAndPut(origin, dest);
+						}else {
+							findAndPut(origin, dest);
+						}
 					}	
 					//find not equals
 					slope1 = slope2; 
 					n = 1;
+					min = sortPoints[j]; //save the minPoints
 				}	
 			}
 			//the end one
 			if(n >= 3) {
 				Point dest = sortPoints[sortPoints.length - 1];
-				findAndPut(origin, dest);
+				//fnd the largest line segment
+				if(min.compareTo(origin) < 0) {
+					//findAndPut(origin, dest);
+				}else {
+					findAndPut(origin, dest);
+				}
 			}	
 		}	
-	  this.lineSegmentList = Arrays.copyOf(this.lineSegmentList, numberOfSegments);
+
+		//
+		lineSegmentList = Arrays.copyOf(lineSegmentList, numberOfSegments);
 	}
 
-	//find and put lineSegment 
 	private void findAndPut(Point origin, Point dest) {
-
-		//find duplicate line
-		for(int i = 0; i < numberOfSegments; i++) {
-
-			Point s1 = originPoints[i]; //the line origin point 
-
-			double slope1 = s1.slopeTo(origin);
-			double slope2 = s1.slopeTo(dest);
-			//the same line ?
-			if(slope1 == slope2) {
-				return; //find the same line
-			}
-		}
 
 		if(numberOfSegments == lineSegmentList.length) {
 			lineSegmentList = Arrays.copyOf(lineSegmentList, 2 * lineSegmentList.length);
 		}
-
-		if(numberOfSegments == originPoints.length) {
-			originPoints = Arrays.copyOf(originPoints, 2 * originPoints.length);
-		}
-
-		int index = numberOfSegments;
-
-		lineSegmentList[index] = new LineSegment(origin, dest);
-		originPoints[index] = origin; //the origin point 
-
-		numberOfSegments++;
+		lineSegmentList[numberOfSegments++] = new LineSegment(origin, dest);
 	}
-
 
 	public int numberOfSegments() {
 		return this.numberOfSegments;	
